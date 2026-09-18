@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랄세이 패기 클릭커</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            width: 80px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .sidebar-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,107,157,0.5);
+        }
+
+        .sidebar-btn.active {
+            background: linear-gradient(135deg, #6bcf7f, #4a90d9);
+        }
+
+        .sidebar-btn span {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 메인 영역 */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 상단 통계 */
+        .top-stats {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 30px;
+            background: rgba(0,0,0,0.5);
+            padding: 15px 30px;
+            border-radius: 15px;
+            z-index: 50;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b9d;
+        }
+
+        /* 환생 보너스 표시 */
+        .reincarnation-bonus {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,215,0,0.2);
+            padding: 8px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #ffd700;
+            border: 1px solid #ffd700;
+        }
+
+        /* 중앙 랄세이 */
+        .center-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stage-info {
+            background: rgba(255,107,157,0.2);
+            padding: 15px 30px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .current-stage {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b9d, #c44569);
+            transition: width 0.3s;
+        }
+
+        .stage-requirement {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 8px;
+        }
+
+        .ralsei-container {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .ralsei-container:hover {
+            transform: scale(1.05);
+        }
+
+        .ralsei-container:active {
+            transform: scale(0.95);
+        }
+
+        .ralsei-image {
+            width: 300px;
+            height: 300px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            object-fit: cover;
+            image-rendering: pixelated;
+            transition: all 0.3s;
+        }
+
+        .ralsei-image.exploding {
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .explosion-particle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleExplode 1s ease-out forwards;
+        }
+
+        @keyframes particleExplode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .click-hint {
+            font-size: 16px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+
+        /* 모달 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #ff6b9d;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,107,157,0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b9d;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #ff6b9d;
+        }
+
+        /* 업그레이드 아이템 */
+        .upgrade-item {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .upgrade-item:hover {
+            background: rgba(255,107,157,0.2);
+            transform: translateX(5px);
+        }
+
+        .upgrade-info {
+            flex: 1;
+        }
+
+        .upgrade-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b9d;
+            margin-bottom: 5px;
+        }
+
+        .upgrade-description {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .upgrade-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .upgrade-cost {
+            color: #ffd93d;
+        }
+
+        .upgrade-level {
+            color: #6bcf7f;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin-left: 15px;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255,107,157,0.4);
+        }
+
+        .upgrade-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* 설정 아이템 */
+        .setting-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .setting-label {
+            font-size: 16px;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-btn {
+            background: linear-gradient(135deg, #4a90d9, #6bcf7f);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .setting-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .setting-btn.danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .setting-btn.golden {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #000;
+        }
+
+        /* 환생 정보 */
+        .reincarnation-info {
+            background: rgba(255,215,0,0.1);
+            border: 2px solid #ffd700;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .reincarnation-info h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .reincarnation-info p {
+            color: #aaa;
+            margin: 5px 0;
+        }
+
+        .reincarnation-info .bonus {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        /* 이미지 업로드 */
+        .image-upload-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .image-upload-section h3 {
+            color: #ff6b9d;
+            margin-bottom: 15px;
+        }
+
+        .image-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .image-upload-item {
+            position: relative;
+        }
+
+        .image-upload-item img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .image-upload-item img:hover {
+            border-color: #ff6b9d;
+        }
+
+        .image-upload-item input {
+            display: none;
+        }
+
+        .image-upload-label {
+            display: block;
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #ff6b9d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #ff6b9d;
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .image-upload-label:hover {
+            background: rgba(255,107,157,0.2);
+        }
+
+        /* 클릭 효과 */
+        .click-effect {
+            position: fixed;
+            pointer-events: none;
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6b9d;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: floatUp 1s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.5);
+            }
+        }
+
+        /* 스테이지 프리뷰 */
+        .stage-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stage-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            opacity: 0.4;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .stage-icon.active {
+            opacity: 1;
+            border-color: #ff6b9d;
+            transform: scale(1.1);
+        }
+
+        .stage-icon:hover {
+            opacity: 0.8;
+        }
+
+        /* 스테이지 정보 모달 */
+        .stage-info-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stage-detail {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .stage-detail img {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        .stage-detail-info h3 {
+            color: #ff6b9d;
+            margin-bottom: 5px;
+        }
+
+        .stage-detail-info p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .game-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 60px;
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .sidebar-btn {
+                width: 50px;
+                height: 50px;
+            }
+
+            .ralsei-image {
+                width: 200px;
+                height: 200px;
+            }
+
+            .top-stats {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <!-- 사이드바 -->
+        <div class="sidebar">
+            <button class="sidebar-btn" onclick="openModal('upgrades')" title="업그레이드">
+                ⚡
+                <span>업그레이드</span>
+            </button>
+            <button class="sidebar-btn" onclick="openModal('stages')" title="스테이지">
+                🎭
+                <span>스테이지</span>
+            </button>
+            <button class="sidebar-btn" onclick="openModal('reincarnation')" title="환생">
+                ✨
+                <span>환생</span>
+            </button>
+            <button class="sidebar-btn" onclick="openModal('images')" title="이미지">
+                🖼️
+                <span>이미지</span>
+            </button>
+            <button class="sidebar-btn" onclick="openModal('settings')" title="설정">
+                ⚙️
+                <span>설정</span>
+            </button>
+            <button class="sidebar-btn" onclick="openModal('stats')" title="통계">
+                📊
+                <span>통계</span>
+            </button>
+        </div>
+
+        <!-- 메인 영역 -->
+        <div class="main-area">
+            <!-- 상단 통계 -->
+            <div class="top-stats">
+                <div class="stat-item">
+                    <div class="stat-label">총 패기</div>
+                    <div class="stat-value" id="total-clicks">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">클릭당</div>
+                    <div class="stat-value" id="click-power">1</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">초당</div>
+                    <div class="stat-value" id="auto-clicks">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">환생</div>
+                    <div class="stat-value" id="reincarnation-count">0</div>
+                </div>
+            </div>
+
+            <!-- 환생 보너스 표시 -->
+            <div class="reincarnation-bonus" id="reincarnation-bonus" style="display: none;">
+                환생 보너스: +<span id="bonus-multiplier">0</span>%
+            </div>
+
+            <!-- 중앙 스테이지 -->
+            <div class="center-stage">
+                <div class="stage-info">
+                    <div class="current-stage" id="current-stage">더미</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="stage-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="stage-requirement" id="stage-requirement">다음 단계까지: 100 패기</div>
+                </div>
+
+                <div class="ralsei-container" onclick="clickRalsei(event)" id="ralsei-container">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect fill='%234a90d9' width='300' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='white'%3E더미%3C/text%3E%3C/svg%3E" alt="랄세이" class="ralsei-image" id="ralsei-img">
+                </div>
+
+                <div class="click-hint">클릭해서 패기!</div>
+
+                <div class="stage-preview" id="stage-preview">
+                    <!-- 스테이지 아이콘들 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 업그레이드 모달 -->
+    <div class="modal-overlay" id="upgrades-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">⚡ 업그레이드</h2>
+                <button class="close-btn" onclick="closeModal('upgrades')">&times;</button>
+            </div>
+            <div id="upgrades-container">
+                <!-- 업그레이드 아이템들 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 스테이지 모달 -->
+    <div class="modal-overlay" id="stages-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🎭 스테이지 정보</h2>
+                <button class="close-btn" onclick="closeModal('stages')">&times;</button>
+            </div>
+            <div class="stage-info-content" id="stages-container">
+                <!-- 스테이지 정보들 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 환생 모달 -->
+    <div class="modal-overlay" id="reincarnation-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">✨ 환생</h2>
+                <button class="close-btn" onclick="closeModal('reincarnation')">&times;</button>
+            </div>
+            <div class="reincarnation-info">
+                <h3>환생 시스템</h3>
+                <p>환생하면 모든 진행상황이 초기화되지만 영구적인 보너스를 얻습니다.</p>
+                <p>현재 환생 횟수: <span id="current-reincarnations">0</span></p>
+                <p>현재 보너스: +<span id="current-bonus">0</span>%</p>
+                <p class="bonus">다음 환생 보너스: +<span id="next-bonus">10</span>%</p>
+                <p>환생 조건: 최소 <span id="reincarnation-requirement">10000</span> 패기</p>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">환생하기</div>
+                <div class="setting-control">
+                    <button class="setting-btn golden" onclick="reincarnate()" id="reincarnate-btn">환생</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이미지 모달 -->
+    <div class="modal-overlay" id="images-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🖼️ 이미지 설정</h2>
+                <button class="close-btn" onclick="closeModal('images')">&times;</button>
+            </div>
+            <div class="image-upload-section">
+                <h3>스테이지 이미지 업로드</h3>
+                <p style="color: #aaa; margin-bottom: 10px;">각 스테이지의 이미지를 직접 업로드하세요</p>
+                <div class="image-upload-grid" id="image-upload-grid">
+                    <!-- 이미지 업로드 아이템들 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ 설정</h2>
+                <button class="close-btn" onclick="closeModal('settings')">&times;</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">게임 리셋</div>
+                <div class="setting-control">
+                    <button class="setting-btn danger" onclick="resetGame()">전체 리셋</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">데이터 내보내기</div>
+                <div class="setting-control">
+                    <button class="setting-btn" onclick="exportData()">내보내기</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">데이터 가져오기</div>
+                <div class="setting-control">
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                    <button class="setting-btn" onclick="document.getElementById('import-file').click()">가져오기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 통계 모달 -->
+    <div class="modal-overlay" id="stats-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 게임 통계</h2>
+                <button class="close-btn" onclick="closeModal('stats')">&times;</button>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">총 클릭 수</div>
+                <div class="setting-control">
+                    <span id="stat-total-clicks">0</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">플레이 시간</div>
+                <div class="setting-control">
+                    <span id="stat-play-time">0분</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">달성한 스테이지</div>
+                <div class="setting-control">
+                    <span id="stat-stage">더미</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">총 업그레이드 레벨</div>
+                <div class="setting-control">
+                    <span id="stat-upgrade-levels">0</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">환생 횟수</div>
+                <div class="setting-control">
+                    <span id="stat-reincarnations">0</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <div class="setting-label">총 획득 패기</div>
+                <div class="setting-control">
+                    <span id="stat-total-earned">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상태
+        let gameState = {
+            totalClicks: 0,
+            clickPower: 1,
+            autoClicks: 0,
+            currentStage: 0,
+            totalManualClicks: 0,
+            startTime: Date.now(),
+            reincarnations: 0,
+            totalEarnedClicks: 0,
+            customImages: {},
+            upgrades: {
+                strongerFist: { level: 0, baseCost: 10, basePower: 1, name: "강한 주먹", description: "클릭당 패기 +1" },
+                autoClicker: { level: 0, baseCost: 50, basePower: 1, name: "자동 패기", description: "초당 패기 +1" },
+                criticalHit: { level: 0, baseCost: 100, basePower: 0.1, name: "크리티컬", description: "크리티컬 확률 +10%" },
+                doubleClick: { level: 0, baseCost: 200, basePower: 0.05, name: "더블 클릭", description: "더블 클릭 확률 +5%" },
+                rageMode: { level: 0, baseCost: 500, basePower: 0.5, name: "분노 모드", description: "클릭 파워 +50%" },
+                luckyClick: { level: 0, baseCost: 1000, basePower: 0.02, name: "행운의 클릭", description: "3배 데미지 확률 +2%" },
+                ironFist: { level: 0, baseCost: 2000, basePower: 5, name: "강철 주먹", description: "클릭당 패기 +5" },
+                superAuto: { level: 0, baseCost: 5000, basePower: 5, name: "슈퍼 오토", description: "초당 패기 +5" },
+                berserkMode: { level: 0, baseCost: 10000, basePower: 1, name: "광폭 모드", description: "전체 데미지 +100%" },
+                masterFist: { level: 0, baseCost: 25000, basePower: 25, name: "마스터 주먹", description: "클릭당 패기 +25" }
+            }
+        };
+
+        // 스테이지 설정
+        const stages = [
+            { name: "더미", requirement: 0, color: "#888", description: "가장 기본적인 형태" },
+            { name: "망토를 뒤집어쓴 랄세이", requirement: 100, color: "#4a90d9", description: "망토를 뒤집어쓴 모습" },
+            { name: "흑색 랄세이", requirement: 500, color: "#2c2c2c", description: "어둠에 물든 모습" },
+            { name: "백색 랄세이", requirement: 2000, color: "#ffffff", description: "순백의 모습" },
+            { name: "신사 랄세이", requirement: 10000, color: "#ffd700", description: "신사로 변신" }
+        ];
+
+        // 환생 설정
+        const reincarnationSettings = {
+            baseRequirement: 10000,
+            bonusPerReincarnation: 10,
+            requirementMultiplier: 1.5
+        };
+
+        // 플레이스홀더 이미지 생성 (SVG 데이터 URI)
+        function createPlaceholderImage(text, color) {
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'>
+                <rect fill='${color}' width='300' height='300'/>
+                <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='white'>${text}</text>
+            </svg>`;
+            return 'data:image/svg+xml,' + encodeURIComponent(svg);
+        }
+
+        // 스테이지 이미지 가져오기
+        function getStageImage(index) {
+            if (gameState.customImages[index]) {
+                return gameState.customImages[index];
+            }
+            return createPlaceholderImage(stages[index].name, stages[index].color);
+        }
+
+        // 스테이지 이미지 배열
+        function getStageImages() {
+            return stages.map((stage, index) => getStageImage(index));
+        }
+
+        // 게임 초기화
+        function initGame() {
+            loadGame();
+            updateDisplay();
+            renderUpgrades();
+            renderStagePreview();
+            renderStagesInfo();
+            renderImageUploadSection();
+            updateReincarnationDisplay();
+            setInterval(autoClick, 1000);
+            setInterval(saveGame, 30000);
+            setInterval(updateStats, 1000);
+        }
+
+        // 랄세이 클릭
+        function clickRalsei(event) {
+            gameState.totalManualClicks++;
+            let clicks = gameState.clickPower;
+            
+            // 환생 보너스 적용
+            clicks *= (1 + gameState.reincarnations * reincarnationSettings.bonusPerReincarnation / 100);
+            
+            // 크리티컬 체크
+            if (Math.random() < gameState.upgrades.criticalHit.level * 0.1) {
+                clicks *= 2;
+                showClickEffect(event, "크리티컬! +" + formatNumber(Math.floor(clicks)));
+            } else if (Math.random() < gameState.upgrades.luckyClick.level * 0.02) {
+                clicks *= 3;
+                showClickEffect(event, "행운! +" + formatNumber(Math.floor(clicks)));
+            } else {
+                showClickEffect(event, "+" + formatNumber(Math.floor(clicks)));
+            }
+
+            // 더블 클릭 체크
+            if (Math.random() < gameState.upgrades.doubleClick.level * 0.05) {
+                clicks *= 2;
+            }
+
+            // 분노 모드 보너스
+            clicks *= (1 + gameState.upgrades.rageMode.level * 0.5);
+            
+            // 광폭 모드 보너스
+            clicks *= (1 + gameState.upgrades.berserkMode.level * 1);
+
+            const finalClicks = Math.floor(clicks);
+            gameState.totalClicks += finalClicks;
+            gameState.totalEarnedClicks += finalClicks;
+            
+            checkStageProgression();
+            checkDummyExplosion();
+            updateDisplay();
+        }
+
+        // 더미 폭발 체크
+        function checkDummyExplosion() {
+            if (gameState.currentStage === 0 && gameState.totalClicks >= 50) {
+                explodeDummy();
+            }
+        }
+
+        // 더미 폭발 효과
+        function explodeDummy() {
+            const container = document.getElementById('ralsei-container');
+            const img = document.getElementById('ralsei-img');
+            
+            img.classList.add('exploding');
+            
+            // 폭발 파티클 생성
+            for (let i = 0; i < 20; i++) {
+                createExplosionParticle(container);
+            }
+            
+            setTimeout(() => {
+                img.classList.remove('exploding');
+                // 폭발 후 다음 스테이지로 강제 진행
+                if (gameState.totalClicks >= stages[1].requirement) {
+                    gameState.currentStage = 1;
+                    updateRalseiImage();
+                    renderStagePreview();
+                    renderStagesInfo();
+                }
+            }, 500);
+        }
+
+        // 폭발 파티클 생성
+        function createExplosionParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'explosion-particle';
+            
+            const colors = ['#ff6b9d', '#ffd700', '#ff4444', '#ffaa00', '#ffffff'];
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 100 + Math.random() * 100;
+            const tx = Math.cos(angle) * distance;
+            const ty = Math.sin(angle) * distance;
+            
+            particle.style.setProperty('--tx', tx + 'px');
+            particle.style.setProperty('--ty', ty + 'px');
+            
+            const rect = container.getBoundingClientRect();
+            particle.style.left = (rect.width / 2) + 'px';
+            particle.style.top = (rect.height / 2) + 'px';
+            
+            container.appendChild(particle);
+            
+            setTimeout(() => particle.remove(), 1000);
+        }
+
+        // 클릭 효과
+        function showClickEffect(event, text) {
+            const effect = document.createElement('div');
+            effect.className = 'click-effect';
+            effect.textContent = text;
+            effect.style.left = event.clientX + 'px';
+            effect.style.top = event.clientY + 'px';
+            document.body.appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 1000);
+        }
+
+        // 자동 클릭
+        function autoClick() {
+            if (gameState.autoClicks > 0) {
+                let autoClickAmount = gameState.autoClicks;
+                autoClickAmount *= (1 + gameState.upgrades.rageMode.level * 0.5);
+                autoClickAmount *= (1 + gameState.upgrades.berserkMode.level * 1);
+                autoClickAmount *= (1 + gameState.reincarnations * reincarnationSettings.bonusPerReincarnation / 100);
+                
+                const finalAmount = Math.floor(autoClickAmount);
+                gameState.totalClicks += finalAmount;
+                gameState.totalEarnedClicks += finalAmount;
+                
+                checkStageProgression();
+                updateDisplay();
+            }
+        }
+
+        // 스테이지 진행 체크
+        function checkStageProgression() {
+            const nextStage = gameState.currentStage + 1;
+            if (nextStage < stages.length && gameState.totalClicks >= stages[nextStage].requirement) {
+                gameState.currentStage = nextStage;
+                updateRalseiImage();
+                renderStagePreview();
+                renderStagesInfo();
+            }
+        }
+
+        // 랄세이 이미지 업데이트
+        function updateRalseiImage() {
+            const img = document.getElementById('ralsei-img');
+            img.src = getStageImage(gameState.currentStage);
+        }
+
+        // 화면 업데이트
+        function updateDisplay() {
+            document.getElementById('total-clicks').textContent = formatNumber(gameState.totalClicks);
+            document.getElementById('reincarnation-count').textContent = gameState.reincarnations;
+            
+            let totalPower = gameState.clickPower;
+            totalPower *= (1 + gameState.upgrades.rageMode.level * 0.5);
+            totalPower *= (1 + gameState.upgrades.berserkMode.level * 1);
+            totalPower *= (1 + gameState.reincarnations * reincarnationSettings.bonusPerReincarnation / 100);
+            
+            document.getElementById('click-power').textContent = formatNumber(Math.floor(totalPower));
+            document.getElementById('auto-clicks').textContent = formatNumber(gameState.autoClicks);
+            
+            // 환생 보너스 표시
+            const bonusDisplay = document.getElementById('reincarnation-bonus');
+            if (gameState.reincarnations > 0) {
+                bonusDisplay.style.display = 'block';
+                document.getElementById('bonus-multiplier').textContent = gameState.reincarnations * reincarnationSettings.bonusPerReincarnation;
+            } else {
+                bonusDisplay.style.display = 'none';
+            }
+            
+            const currentStageData = stages[gameState.currentStage];
+            document.getElementById('current-stage').textContent = currentStageData.name;
+            
+            const nextStage = gameState.currentStage + 1;
+            if (nextStage < stages.length) {
+                const requirement = stages[nextStage].requirement;
+                const progress = (gameState.totalClicks / requirement) * 100;
+                document.getElementById('stage-progress').style.width = Math.min(progress, 100) + '%';
+                document.getElementById('stage-requirement').textContent = 
+                    `다음 단계까지: ${formatNumber(requirement - gameState.totalClicks)} 패기`;
+            } else {
+                document.getElementById('stage-progress').style.width = '100%';
+                document.getElementById('stage-requirement').textContent = '최고 단계 달성!';
+            }
+
+            updateUpgradeButtons();
+            updateReincarnationButton();
+        }
+
+        // 업그레이드 렌더링
+        function renderUpgrades() {
+            const container = document.getElementById('upgrades-container');
+            container.innerHTML = '';
+            
+            for (const [key, upgrade] of Object.entries(gameState.upgrades)) {
+                const upgradeDiv = document.createElement('div');
+                upgradeDiv.className = 'upgrade-item';
+                upgradeDiv.innerHTML = `
+                    <div class="upgrade-info">
+                        <div class="upgrade-name">${upgrade.name}</div>
+                        <div class="upgrade-description">${upgrade.description}</div>
+                        <div class="upgrade-stats">
+                            <span class="upgrade-cost">비용: ${formatNumber(getUpgradeCost(key))} 패기</span>
+                            <span class="upgrade-level">레벨: ${upgrade.level}</span>
+                        </div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('${key}')" id="btn-${key}">
+                        구매
+                    </button>
+                `;
+                container.appendChild(upgradeDiv);
+            }
+        }
+
+        // 업그레이드 비용 계산
+        function getUpgradeCost(key) {
+            const upgrade = gameState.upgrades[key];
+            return Math.floor(upgrade.baseCost * Math.pow(1.5, upgrade.level));
+        }
+
+        // 업그레이드 구매
+        function buyUpgrade(key) {
+            const cost = getUpgradeCost(key);
+            if (gameState.totalClicks >= cost) {
+                gameState.totalClicks -= cost;
+                gameState.upgrades[key].level++;
+                
+                // 업그레이드 효과 적용
+                if (key === 'strongerFist' || key === 'ironFist' || key === 'masterFist') {
+                    gameState.clickPower += gameState.upgrades[key].basePower;
+                } else if (key === 'autoClicker' || key === 'superAuto') {
+                    gameState.autoClicks += gameState.upgrades[key].basePower;
+                }
+                
+                renderUpgrades();
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        // 업그레이드 버튼 상태 업데이트
+        function updateUpgradeButtons() {
+            for (const key of Object.keys(gameState.upgrades)) {
+                const btn = document.getElementById(`btn-${key}`);
+                if (btn) {
+                    const cost = getUpgradeCost(key);
+                    btn.disabled = gameState.totalClicks < cost;
+                }
+            }
+        }
+
+        // 스테이지 프리뷰 렌더링
+        function renderStagePreview() {
+            const container = document.getElementById('stage-preview');
+            container.innerHTML = '';
+            
+            const stageImages = getStageImages();
+            
+            stages.forEach((stage, index) => {
+                const icon = document.createElement('img');
+                icon.className = 'stage-icon' + (index === gameState.currentStage ? ' active' : '');
+                icon.src = stageImages[index];
+                icon.alt = stage.name;
+                icon.title = stage.name + (index > 0 ? ` (${formatNumber(stage.requirement)} 패기)` : '');
+                icon.onclick = () => openModal('stages');
+                container.appendChild(icon);
+            });
+        }
+
+        // 스테이지 정보 렌더링
+        function renderStagesInfo() {
+            const container = document.getElementById('stages-container');
+            container.innerHTML = '';
+            
+            const stageImages = getStageImages();
+            
+            stages.forEach((stage, index) => {
+                const div = document.createElement('div');
+                div.className = 'stage-detail';
+                div.innerHTML = `
+                    <img src="${stageImages[index]}" alt="${stage.name}">
+                    <div class="stage-detail-info">
+                        <h3>${stage.name} ${index === gameState.currentStage ? '(현재)' : ''}</h3>
+                        <p>${stage.description}</p>
+                        <p>필요 패기: ${formatNumber(stage.requirement)}</p>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 환생 디스플레이 업데이트
+        function updateReincarnationDisplay() {
+            document.getElementById('current-reincarnations').textContent = gameState.reincarnations;
+            document.getElementById('current-bonus').textContent = gameState.reincarnations * reincarnationSettings.bonusPerReincarnation;
+            document.getElementById('next-bonus').textContent = (gameState.reincarnations + 1) * reincarnationSettings.bonusPerReincarnation;
+            
+            const requirement = Math.floor(reincarnationSettings.baseRequirement * Math.pow(reincarnationSettings.requirementMultiplier, gameState.reincarnations));
+            document.getElementById('reincarnation-requirement').textContent = formatNumber(requirement);
+        }
+
+        // 환생 버튼 상태 업데이트
+        function updateReincarnationButton() {
+            const btn = document.getElementById('reincarnate-btn');
+            const requirement = Math.floor(reincarnationSettings.baseRequirement * Math.pow(reincarnationSettings.requirementMultiplier, gameState.reincarnations));
+            btn.disabled = gameState.totalClicks < requirement;
+        }
+
+        // 환생 실행
+        function reincarnate() {
+            const requirement = Math.floor(reincarnationSettings.baseRequirement * Math.pow(reincarnationSettings.requirementMultiplier, gameState.reincarnations));
+            
+            if (gameState.totalClicks >= requirement) {
+                if (confirm(`정말로 환생하시겠습니까?\n\n• 모든 진행상황이 초기화됩니다\n• 영구적인 +${(gameState.reincarnations + 1) * reincarnationSettings.bonusPerReincarnation}% 보너스를 얻습니다\n• 업그레이드와 스테이지가 리셋됩니다`)) {
+                    gameState.reincarnations++;
+                    gameState.totalClicks = 0;
+                    gameState.clickPower = 1;
+                    gameState.autoClicks = 0;
+                    gameState.currentStage = 0;
+                    gameState.totalManualClicks = 0;
+                    
+                    // 업그레이드 리셋
+                    for (const key of Object.keys(gameState.upgrades)) {
+                        gameState.upgrades[key].level = 0;
+                    }
+                    
+                    // 이미지는 유지
+                    gameState.startTime = Date.now();
+                    
+                    updateRalseiImage();
+                    renderUpgrades();
+                    renderStagePreview();
+                    renderStagesInfo();
+                    updateReincarnationDisplay();
+                    updateDisplay();
+                    saveGame();
+                    
+                    alert(`환생 성공!\n\n현재 환생 횟수: ${gameState.reincarnations}\n영구 보너스: +${gameState.reincarnations * reincarnationSettings.bonusPerReincarnation}%`);
+                }
+            }
+        }
+
+        // 이미지 업로드 섹션 렌더링
+        function renderImageUploadSection() {
+            const container = document.getElementById('image-upload-grid');
+            container.innerHTML = '';
+            
+            stages.forEach((stage, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-upload-item';
+                
+                const currentImage = getStageImage(index);
+                
+                div.innerHTML = `
+                    <img src="${currentImage}" alt="${stage.name}" onclick="document.getElementById('image-input-${index}').click()">
+                    <input type="file" id="image-input-${index}" accept="image/*" onchange="uploadImage(event, ${index})">
+                `;
+                container.appendChild(div);
+            });
+            
+            // 추가 이미지 슬롯
+            const addDiv = document.createElement('div');
+            addDiv.className = 'image-upload-item';
+            addDiv.innerHTML = `
+                <label class="image-upload-label" onclick="addCustomImageSlot()">
+                    +
+                </label>
+            `;
+            container.appendChild(addDiv);
+        }
+
+        // 이미지 업로드
+        function uploadImage(event, stageIndex) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    gameState.customImages[stageIndex] = e.target.result;
+                    updateRalseiImage();
+                    renderStagePreview();
+                    renderStagesInfo();
+                    renderImageUploadSection();
+                    saveGame();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 커스텀 이미지 슬롯 추가
+        function addCustomImageSlot() {
+            const nextIndex = Object.keys(gameState.customImages).length;
+            if (nextIndex < stages.length) {
+                document.getElementById(`image-input-${nextIndex}`).click();
+            } else {
+                alert('더 이상 이미지 슬롯이 없습니다.');
+            }
+        }
+
+        // 모달 열기
+        function openModal(type) {
+            document.getElementById(`${type}-modal`).classList.add('active');
+            
+            if (type === 'stats') {
+                updateStatsDisplay();
+            } else if (type === 'reincarnation') {
+                updateReincarnationDisplay();
+            } else if (type === 'images') {
+                renderImageUploadSection();
+            }
+        }
+
+        // 모달 닫기
+        function closeModal(type) {
+            document.getElementById(`${type}-modal`).classList.remove('active');
+        }
+
+        // 통계 업데이트
+        function updateStatsDisplay() {
+            document.getElementById('stat-total-clicks').textContent = formatNumber(gameState.totalManualClicks);
+            
+            const playTime = Math.floor((Date.now() - gameState.startTime) / 60000);
+            document.getElementById('stat-play-time').textContent = playTime + '분';
+            
+            document.getElementById('stat-stage').textContent = stages[gameState.currentStage].name;
+            
+            const totalLevels = Object.values(gameState.upgrades).reduce((sum, upgrade) => sum + upgrade.level, 0);
+            document.getElementById('stat-upgrade-levels').textContent = totalLevels;
+            
+            document.getElementById('stat-reincarnations').textContent = gameState.reincarnations;
+            document.getElementById('stat-total-earned').textContent = formatNumber(gameState.totalEarnedClicks);
+        }
+
+        // 통계 주기적 업데이트
+        function updateStats() {
+            if (document.getElementById('stats-modal').classList.contains('active')) {
+                updateStatsDisplay();
+            }
+        }
+
+        // 게임 리셋
+        function resetGame() {
+            if (confirm('정말로 게임을 리셋하시겠습니까? 모든 데이터가 삭제됩니다.')) {
+                localStorage.removeItem('ralseiClicker');
+                location.reload();
+            }
+        }
+
+        // 데이터 내보내기
+        function exportData() {
+            const dataStr = JSON.stringify(gameState, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'ralsei-clicker-save.json';
+            link.click();
+        }
+
+        // 데이터 가져오기
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedState = JSON.parse(e.target.result);
+                        gameState = importedState;
+                        saveGame();
+                        location.reload();
+                    } catch (error) {
+                        alert('파일을 읽는 중 오류가 발생했습니다.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // 숫자 포맷팅
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        // 게임 저장
+        function saveGame() {
+            localStorage.setItem('ralseiClicker', JSON.stringify(gameState));
+        }
+
+        // 게임 로드
+        function loadGame() {
+            const saved = localStorage.getItem('ralseiClicker');
+            if (saved) {
+                try {
+                    const loadedState = JSON.parse(saved);
+                    gameState = { ...gameState, ...loadedState };
+                    updateRalseiImage();
+                } catch (error) {
+                    console.error('Failed to load save:', error);
+                }
+            }
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // 게임 시작
+        initGame();
+    </script>
+</body>
+</html>

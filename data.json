@@ -1,0 +1,56 @@
+{
+  "players": {
+    "1131835744919502878": {
+      "user_id": "1131835744919502878",
+      "name": "체커",
+      "class_name": "전사",
+      "level": 1,
+      "exp": 22,
+      "gold": 11,
+      "current_hp": 160,
+      "max_hp": 160,
+      "current_mp": 35,
+      "max_mp": 35,
+      "attack": 17,
+      "defense": 11,
+      "speed": 9,
+      "skills": [
+        "파워 스트라이크",
+        "방어 태세",
+        "분노의 일격"
+      ]
+    }
+  },
+  "inventories": {
+    "1131835744919502878": {
+      "items": {},
+      "max_slots": 20,
+      "equipped": {
+        "weapon": {
+          "item_id": "sword_iron",
+          "name": "철검",
+          "item_type": "무기",
+          "description": "기본적인 철검",
+          "price": 100,
+          "stat_bonus": {
+            "attack": 5
+          },
+          "consumable": false
+        },
+        "armor": null,
+        "accessory": null
+      }
+    }
+  },
+  "parties": {},
+  "battles": {},
+  "compendiums": {
+    "1131835744919502878": {
+      "monsters": [
+        "슬라임"
+      ],
+      "items": [],
+      "bosses": []
+    }
+  }
+}
